@@ -16,18 +16,19 @@ function App() {
   const [skip, setSkip] = useState(0);
   const [totalPage, setTotalPage] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [dataType, setDataType] = useState(null);
   useEffect(() => {
     getShopData();
   }, []);
 
-  const getShopData = async () => {
-    let response = await getData(`products?limit=${limit}&skip=${skip}`);
+  const getShopData = async (skipCount=skip) => {
+    let response = await getData(`products?limit=${limit}&skip=${skipCount}`);
     if (response && response.data && response.data.products) {
       setData(response.data.products);
       setTotalPage(Math.ceil(response.data.total/limit))
     }
     let categoryCollection = await getData(
-      `products/categories?limit=${limit}&skip=${skip}`
+      `products/categories`
     );
     if (
       categoryCollection &&
@@ -38,9 +39,7 @@ function App() {
     }
   };
 
-
-  const DropdownSelectHandler = async (value) => {
-    setSelectedCategory(value)
+  const getCategoryData = async(value=selectedCategory)=>{
     let categoryResponse = await getData(
       `products/category/${value}?limit=${limit}&skip=${skip}`
     );
@@ -52,11 +51,20 @@ function App() {
       setData(categoryResponse.data.products);
       setTotalPage(Math.ceil(categoryResponse.data.total/limit))
     }
+  }
+
+
+  const DropdownSelectHandler =  (value) => {
+    setSelectedCategory(value === "All Category"? null : value)
+    setDataType(value && value !== "All Category" ? "Category" : null)
+    if(value === "All Category"){
+      getShopData(0)
+    }
+    setSkip(0)
   };
   // const handleSearch = useCallback(debounce(inputVal => SearchHandler(inputVal), 500), []);
 
-  const SearchHandler = async (value) => {
-    setSearchValue(value);
+  const getSearchData = async(value=searchValue)=>{
     let searchResponse = await getData(
       `products/search?q=${value}&limit=${limit}&skip=${skip}`
     );
@@ -64,10 +72,22 @@ function App() {
       setTotalPage(Math.ceil(searchResponse.data.total/limit))
       setData(searchResponse.data.products);
     }
+  }
+
+  const SearchHandler = async (value) => {
+    setSearchValue(value);
+    setDataType(value ? "Search" : null)
+    setSkip(0)
   };
 
   useEffect(()=>{
-    getShopData()
+    if(dataType === "Search"){
+      getSearchData()
+    }else if(dataType === "Category"){
+      getCategoryData()
+    }else{
+      getShopData()
+    }
   },[skip])
 
   const onPageChange = (page) => {
@@ -89,7 +109,7 @@ function App() {
         </div>
         <div className="py-3">
           <CustomDropDown
-            data={categories}
+            data={["All Category",...categories]}
             value={selectedCategory}
             label={"Select Category"}
             onChange={DropdownSelectHandler}
@@ -108,7 +128,7 @@ function App() {
           )}
         </div>
         { totalPage ? <div className="d-flex justify-content-end">
-        <Pagination totalPages={totalPage} onPageChange={onPageChange} />
+        <Pagination totalPages={totalPage} onPageChange={onPageChange} resetPageNo={dataType} />
         </div>: null}
       </div>
       <Footer />

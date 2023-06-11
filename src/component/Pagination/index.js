@@ -1,13 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./pagination.css";
 
-const Pagination = ({ totalPages, onPageChange }) => {
+const Pagination = ({ totalPages, onPageChange, resetPageNo }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
     onPageChange(page);
   };
+
+  useEffect(()=>{
+    setCurrentPage(1)
+  },[resetPageNo])
 
   const renderPaginationDots = () => {
     const paginationDots = [];
