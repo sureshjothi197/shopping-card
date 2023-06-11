@@ -1,0 +1,1 @@
+export const stringTruncate = (value, startIndex, endIndex, limit)=>(value.length > limit ? `${value.slice(startIndex, endIndex)}...`:value)
